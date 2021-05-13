@@ -35,7 +35,7 @@
 <h2 align="center">Packify</h2>
 
   <p align="center">
-    FOO
+    Useful networking abstractions build on top of JGroup transport.
     <br>
     <a href="#"><strong>Explore the docs »</strong></a>
     <br />
