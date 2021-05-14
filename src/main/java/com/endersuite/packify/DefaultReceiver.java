@@ -3,7 +3,6 @@ package com.endersuite.packify;
 import com.endersuite.libcore.strfmt.Level;
 import com.endersuite.libcore.strfmt.StrFmt;
 import com.endersuite.packify.events.PacketReceivedEvent;
-import com.endersuite.packify.packets.ACollectablePacket;
 import com.endersuite.packify.packets.APacket;
 import lombok.Getter;
 import org.jgroups.Message;
@@ -88,14 +87,7 @@ public class DefaultReceiver implements Receiver {
                     .setLevel(Level.DEBUG)
                     .toLog();
 
-            // COLLECT RESPONSE PACKET
-            // Cast, add to collect, call callback if every node has responded
-            if (packet instanceof ACollectablePacket && ((ACollectablePacket) packet).getType().equals(ACollectablePacket.Type.RESPONSE)) {
-                getNetworkManager().getCollectablePacketHandler().handleCollectablePacket((ACollectablePacket) packet);
-            }
-
-            // DEFAULT PACKET
-            else getNetworkManager().getEventLoop().dispatch(new PacketReceivedEvent(packet));
+            getNetworkManager().getEventLoop().dispatch(new PacketReceivedEvent(packet));
 
         }
     }

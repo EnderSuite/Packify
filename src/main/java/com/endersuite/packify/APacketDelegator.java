@@ -104,7 +104,6 @@ public abstract class APacketDelegator {
      * @param event
      *          The handled event
      */
-    //@Synchronized
     public void handlePacketReceivedEvent(PacketReceivedEvent event) {
         APacket packet = event.getPacket();
 
@@ -117,8 +116,9 @@ public abstract class APacketDelegator {
 
             try { handler.accept(packet); }
             catch (Exception e) {
-                new StrFmt("{prefix} Could not handle " + packet + "! Dropping it", e).setLevel(Level.WARN).toLog();
-                //TODO FIX log.error(ExceptionUtils.getStackTraceAsString(e));
+                e.printStackTrace();
+                new StrFmt("{prefix} A handle threw an error for " + packet + "!", e)
+                        .setLevel(Level.ERROR).toLog();
             }
 
         }

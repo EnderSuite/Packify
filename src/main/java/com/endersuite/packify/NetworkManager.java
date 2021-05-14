@@ -96,4 +96,24 @@ public class NetworkManager extends APacketDelegator {
         getJChannel().send(message);
     }
 
+
+    // ======================   EVENT HANDLERS
+
+    @Override
+    public void handlePacketReceivedEvent(PacketReceivedEvent event) {
+        APacket packet = event.getPacket();
+
+        if (packet instanceof ACollectablePacket && ((ACollectablePacket) packet).getType().equals(ACollectablePacket.Type.RESPONSE)) {
+            try { getCollectableManager().handleCollectablePacket((ACollectablePacket) packet); }
+            catch (Exception e) {
+                e.printStackTrace();
+                new StrFmt("{prefix} A handle threw an error for collectable " + packet + "!", e)
+                        .setLevel(Level.ERROR).toLog();
+            }
+            return;
+        }
+
+        super.handlePacketReceivedEvent(event);
+    }
+
 }
