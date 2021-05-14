@@ -103,6 +103,7 @@ public class CompletableTransmission extends Transmission {
      * @param responsePacket
      *          The packet to add
      */
+    @Synchronized
     public void addResponsePacket(ACollectablePacket responsePacket) {
         this.receivedResponsePackets.add(responsePacket);
     }
@@ -112,6 +113,7 @@ public class CompletableTransmission extends Transmission {
      */
     @Synchronized
     public void complete() {
+        removeFromPendingList();
         this.callback.complete(this.receivedResponsePackets);
     }
 
@@ -123,6 +125,7 @@ public class CompletableTransmission extends Transmission {
      */
     @Synchronized
     public void error(Throwable throwable) {
+        removeFromPendingList();
         this.callback.completeExceptionally(throwable);
     }
 
@@ -132,7 +135,7 @@ public class CompletableTransmission extends Transmission {
      */
     @Synchronized
     public void cancel() {
-        getDefaultNetworkManager().getCollectablePacketHandler().getPendingTransmissions().remove(this.collectionId);
+        removeFromPendingList();
         this.callback.cancel(true);
     }
 
@@ -140,7 +143,7 @@ public class CompletableTransmission extends Transmission {
     public void transmit() throws Exception {
 
         // Store pending transmission & Start timeout task
-        getDefaultNetworkManager().getCollectablePacketHandler().getPendingTransmissions().put(collectionId, this);
+        getDefaultNetworkManager().getCollectableManager().getPendingTransmissions().put(collectionId, this);
         if (this.timeout != null) {
             getDefaultNetworkManager().getScheduler().schedule(() -> {
                 this.callback.completeExceptionally(new CompletableTimeoutException(this));
@@ -161,6 +164,11 @@ public class CompletableTransmission extends Transmission {
     @Synchronized
     public boolean isCompletable() {
         return true;
+    }
+
+    @Synchronized
+    private void removeFromPendingList() {
+        getDefaultNetworkManager().getCollectableManager().getPendingTransmissions().remove(this.collectionId);
     }
 
 
@@ -199,10 +207,10 @@ public class CompletableTransmission extends Transmission {
         // ======================   BUSINESS LOGIC
 
         /**
-         * Sets the timeout after which the timeout consumer will be called.
+         * Overrides the default timeout of 15 minutes after which the timeout consumer will be called.
          *
          * @param duration
-         *          Teh duration
+         *          The duration
          * @return
          */
         public CompletableTransmissionBuilder timeout(Duration duration) {
