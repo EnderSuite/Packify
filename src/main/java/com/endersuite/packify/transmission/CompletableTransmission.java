@@ -3,6 +3,7 @@ package com.endersuite.packify.transmission;
 import com.endersuite.packify.exceptions.CompletableTimeoutException;
 import com.endersuite.packify.packets.ACollectablePacket;
 import lombok.Getter;
+import lombok.Synchronized;
 import org.jgroups.Message;
 
 import java.time.Duration;
@@ -55,6 +56,7 @@ public class CompletableTransmission extends Transmission {
     /**
      * Creates a new CompletableTransmission with the given parameters.
      * It will also setup the {@code exception} channel of the callback to distinguish timeout and other errors.
+     *
      * @param message
      * @param collectionId
      * @param minReplies
@@ -94,7 +96,6 @@ public class CompletableTransmission extends Transmission {
 
 
     // ======================   BUSINESS LOGIC
-    // TODO: update state if a node disconnects
 
     /**
      * Adds a packet to the internal list.
@@ -109,6 +110,7 @@ public class CompletableTransmission extends Transmission {
     /**
      * Calls the done consumer with the internal store of received response packets.
      */
+    @Synchronized
     public void complete() {
         this.callback.complete(this.receivedResponsePackets);
     }
@@ -119,6 +121,7 @@ public class CompletableTransmission extends Transmission {
      * @param throwable
      *          The reason
      */
+    @Synchronized
     public void error(Throwable throwable) {
         this.callback.completeExceptionally(throwable);
     }
@@ -127,6 +130,7 @@ public class CompletableTransmission extends Transmission {
      * Cancels the CompletableTransmission.
      * <br><br><i>Note: This will also call the error consumer with a {@link java.util.concurrent.CancellationException}!</i>
      */
+    @Synchronized
     public void cancel() {
         getDefaultNetworkManager().getCollectablePacketHandler().getPendingTransmissions().remove(this.collectionId);
         this.callback.cancel(true);
@@ -154,6 +158,7 @@ public class CompletableTransmission extends Transmission {
      *
      * @return
      */
+    @Synchronized
     public boolean isCompletable() {
         return true;
     }
