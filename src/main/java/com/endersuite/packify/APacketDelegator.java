@@ -13,7 +13,7 @@ import java.util.concurrent.*;
 import java.util.function.Consumer;
 
 /**
- * A wrapper class that stores registered packet handlers & callbacks.
+ * A wrapper class that stores registered packet handlers and callbacks.
  */
 @Getter
 public abstract class APacketDelegator {
@@ -66,6 +66,7 @@ public abstract class APacketDelegator {
      *          The class identifying the  for which the handler will be executed
      * @param handler
      *          The handler function
+     * @param <P>
      */
     public <P extends APacket> void addPacketHandler(Class<P> clazz, Consumer<P> handler) {
 
@@ -82,6 +83,7 @@ public abstract class APacketDelegator {
      *          The class associated the handler is associated with
      * @param handler
      *          The handler function
+     * @param <P>
      * @return
      *          {@code true} if the handler was actually removed | {@code false} if no matching handler was registered
      */

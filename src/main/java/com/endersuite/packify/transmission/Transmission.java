@@ -12,7 +12,7 @@ import org.jgroups.Message;
  * A Transmission stores a {@link Message} and can be send (transmitted) to other nodes in the cluster.
  * A Transmission can only be created using a {@link TransmissionBuilder}.
  *
- * <br><br><i>Note: If you want to receive & collect responses from your transmission,
+ * <br><br><i>Note: If you want to receive and collect responses from your transmission,
  * use one of the {@code collectXXX()} methods!</i>
  *
  * @author Maximilian Vincent Heidenreich

@@ -35,7 +35,7 @@ public class DefaultReceiver implements Receiver {
     // ======================   BUSINESS LOGIC
 
     /**
-     * TODO: Add docs -> What changes inside the plugin?
+     * Displays info that cluster changed and calls method to complete completable transmissions.
      *
      * @param new_view
      *          The new membership state
@@ -43,7 +43,7 @@ public class DefaultReceiver implements Receiver {
     @Override
     public void viewAccepted(View new_view) {
         new StrFmt("{prefix} Cluster members updated: §e" + new_view)
-                .setLevel(Level.DEBUG)
+                .setLevel(Level.INFO)
                 .toLog();
 
         getNetworkManager().getCollectableManager().completeCompletableTransmissions();

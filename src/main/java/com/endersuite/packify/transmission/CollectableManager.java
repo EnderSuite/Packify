@@ -2,14 +2,13 @@ package com.endersuite.packify.transmission;
 
 import com.endersuite.packify.NetworkManager;
 import com.endersuite.packify.packets.ACollectablePacket;
-import com.endersuite.packify.packets.APacket;
 import lombok.Getter;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * TODO: Add docs
+ * Manages {@link ACollectablePacket}s and pending transmissions.
  *
  * @author Maximilian Vincent Heidenreich
  * @since 11.05.21
@@ -37,6 +36,13 @@ public class CollectableManager {
 
     // ======================   BUSINESS LOGIC
 
+    /**
+     * Handles a collectable packet by adding it to matching pending transmissions and
+     * completing them if they are completable.
+     *
+     * @param packet
+     *          The packet to handle
+     */
     public void handleCollectablePacket(ACollectablePacket packet) {
 
         // RET: No pending transmission or the received collection id
@@ -49,13 +55,12 @@ public class CollectableManager {
         if (!transmission.isCompletable()) return;
 
         transmission.complete();
-
     }
 
     /**
      * Iterates through all pending transmissions and completes them if they are completable.
      * <br><br><i>Note: Called after cluster changed. This prevents transmissions from never completing
-     * due to mismatch from node count when created ({@link Transmission.TransmissionBuilder#collectAll()}) & now.</i>
+     * due to mismatch from node count when created ({@link Transmission.TransmissionBuilder#collectAll()}) and now.</i>
      */
     public void completeCompletableTransmissions() {
         for (Iterator<CompletableTransmission> iterator = getPendingTransmissions().values().iterator(); getPendingTransmissions().values().iterator().hasNext(); ) {
