@@ -3,10 +3,9 @@ package com.endersuite.packify;
 import com.endersuite.libcore.strfmt.Level;
 import com.endersuite.libcore.strfmt.StrFmt;
 import com.endersuite.packify.events.PacketReceivedEvent;
-import com.endersuite.packify.handlers.CollectablePacketHandler;
-import com.endersuite.packify.packets.ACollectableResponsePacket;
+import com.endersuite.packify.packets.ACollectablePacket;
 import com.endersuite.packify.packets.APacket;
-import de.maximilianheidenreich.jeventloop.EventLoop;
+import lombok.Getter;
 import org.jgroups.Message;
 import org.jgroups.Receiver;
 import org.jgroups.View;
@@ -22,16 +21,15 @@ public class DefaultReceiver implements Receiver {
 
     // ======================   VARS
 
-    /**
-     * The EventLoop used to dispatch {@link PacketReceivedEvent} events to.
-     */
-    private final EventLoop eventLoop;
+
+    @Getter
+    private final NetworkManager networkManager;
 
 
     // ======================   CONSTRUCTOR
 
-    public DefaultReceiver(EventLoop eventLoop) {
-        this.eventLoop = eventLoop;
+    public DefaultReceiver(NetworkManager networkManager) {
+        this.networkManager = networkManager;
     }
 
 
@@ -48,6 +46,8 @@ public class DefaultReceiver implements Receiver {
         new StrFmt("{prefix} Cluster members updated: §e" + new_view)
                 .setLevel(Level.DEBUG)
                 .toLog();
+
+        getNetworkManager().getCollectablePacketHandler().completeCompletableTransmissions();
     }
 
     /**
@@ -90,12 +90,12 @@ public class DefaultReceiver implements Receiver {
 
             // COLLECT RESPONSE PACKET
             // Cast, add to collect, call callback if every node has responded
-            if (packet instanceof ACollectableResponsePacket) {
-                CollectablePacketHandler.handleCollectablePacket((ACollectableResponsePacket) packet);
+            if (packet instanceof ACollectablePacket && ((ACollectablePacket) packet).getType().equals(ACollectablePacket.Type.RESPONSE)) {
+                getNetworkManager().getCollectablePacketHandler().handleCollectablePacket((ACollectablePacket) packet);
             }
 
             // DEFAULT PACKET
-            else eventLoop.dispatch(new PacketReceivedEvent(packet));
+            else getNetworkManager().getEventLoop().dispatch(new PacketReceivedEvent(packet));
 
         }
     }
