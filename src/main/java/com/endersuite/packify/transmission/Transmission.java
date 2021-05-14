@@ -3,73 +3,70 @@ package com.endersuite.packify.transmission;
 import com.endersuite.packify.NetworkManager;
 import com.endersuite.packify.exceptions.AddressNotFoundException;
 import com.endersuite.packify.packets.APacket;
+import lombok.Getter;
+import lombok.Setter;
 import org.jgroups.Address;
 import org.jgroups.Message;
 
 /**
- * TODO: Add docs
+ * A Transmission stores a {@link Message} and can be send (transmitted) to other nodes in the cluster.
+ * A Transmission can only be created using a {@link TransmissionBuilder}.
+ *
+ * <br><i>Note: If you want to receive & collect responses from your transmission, use the {@link TransmissionBuilder#toCollectable()} method!</i>
  *
  * @author Maximilian Vincent Heidenreich
  * @since 12.05.21
  */
 public class Transmission {
 
+    @Getter @Setter
+    private static NetworkManager defaultNetworkManager;
+
+
     // ======================   VARS
 
+    /**
+     * The message that will be sent.
+     */
     private final Message message;
+
 
     // ======================   CONSTRUCTOR
 
+    /**
+     * Creates a simple transmission for a given message.
+     *
+     * @param message
+     *          The message to transmit
+     */
     protected Transmission(Message message) {
         this.message = message;
     }
 
+
     // ======================   BUSINESS LOGIC
 
-    public Transmission to(Address address) {
-        message.setDest(address);
-        return this;
-    }
-
-    public Transmission to(String nodeName) throws AddressNotFoundException {
-        Address address = NetworkManager.getInstance().getJChannel().getView().getMembers().stream()
-                .filter(a -> a.toString().equals(nodeName)).findFirst().orElse(null);
-
-        // THROW: Address is not known in cluster
-        if (address == null)
-            throw new AddressNotFoundException(nodeName);
-
-        return to(address);
-    }
-
-    public Transmission broadcast(boolean loopback) {
-        message.setDest(null);
-
-        if (!loopback)
-            message.setTransientFlag(Message.TransientFlag.DONT_LOOPBACK);
-
-        return this;
-    }
-
-    public Transmission relay(boolean relay) {
-        if (relay)
-            message.clearFlag(Message.Flag.NO_RELAY);
-        else
-            message.setFlag(Message.Flag.NO_RELAY);
-        return this;
-    }
-
-    public CollectableTransmission toCollectable() {
-        return new CollectableTransmission(message);
-    }
-
+    /**
+     * Sends the message to other nodes in the cluster.
+     * <br><i>Note: To specify a receiver or advanced broadcast options,
+     * use {@link TransmissionBuilder#to(Address)} or {@link TransmissionBuilder#broadcast(boolean)}!</i>
+     *
+     * @throws Exception
+     *          Any possible exceptions whilst transmitting
+     */
     public void transmit() throws Exception {
-        NetworkManager.getInstance().sendRaw(message);
+        getDefaultNetworkManager().sendRaw(message);
     }
 
+    /**
+     * Wrapper around {@link Transmission#transmit()} that catches all Exceptions
+     * and just returns a boolean instead.
+     *
+     * @return {@code true} if no exception occurred | {@code false} if not
+     */
     public boolean sneakyTransmit() {
         try {
-            NetworkManager.getInstance().sendRaw(message);
+            transmit();
         } catch (Exception exception) {
             return false;
         }
@@ -79,13 +76,135 @@ public class Transmission {
 
     // ======================   HELPERS
 
-    public static Transmission fromPacket(APacket packet) {
+    /**
+     * Creates a new TransmissionBuilder from a raw packet.
+     *
+     * @param packet
+     *          The packet to send
+     * @return
+     */
+    public static TransmissionBuilder newBuilder(APacket packet) {
         Message message = new Message(null, packet);
-        return new Transmission(message);
+        return new TransmissionBuilder(message);
     }
 
-    public static Transmission fromMessage(Message message) {
-        return new Transmission(message);
+    /**
+     * Creates a new TransmissionBuilder from any JGroup {@link Message} object.
+     *
+     * @param message
+     *          The message object to send
+     * @return
+     */
+    public static TransmissionBuilder newBuilder(Message message) {
+        return new TransmissionBuilder(message);
+    }
+
+
+    // ======================   BUILDER
+
+    /**
+     * A builder that abstracts the utility methods to construct a {@link Transmission}.
+     */
+    public static class TransmissionBuilder {
+
+        // ======================   VARS
+
+        /**
+         * The message to configure.
+         */
+        private final Message message;
+
+
+        // ======================   CONSTRUCTOR
+
+        protected TransmissionBuilder(Message message) {
+            this.message = message;
+        }
+
+
+        // ======================   BUSINESS LOGIC
+
+        /**
+         * Sets the recipient of the message.
+         *
+         * @param address
+         *          The raw JGroups address object
+         * @return
+         */
+        public TransmissionBuilder to(Address address) {
+            this.message.setDest(address);
+            return this;
+        }
+
+        /**
+         * Sets the recipient of the message by its specified node name.
+         *
+         * @param nodeName
+         *          The name of the recipient node inside the cluster
+         * @return
+         * @throws AddressNotFoundException
+         *          If the given nodeName could not be matched with an Address inside the cluster
+         */
+        public TransmissionBuilder to(String nodeName) throws AddressNotFoundException {
+            Address address = getDefaultNetworkManager().getJChannel().getView().getMembers().stream()
+                    .filter(a -> a.toString().equals(nodeName)).findFirst().orElse(null);
+
+            // THROW: Address is not known in cluster
+            if (address == null)
+                throw new AddressNotFoundException(nodeName);
+
+            return to(address);
+        }
+
+        /**
+         * Sets the message to be broadcast to all nodes inside the cluster.
+         *
+         * @param loopback
+         *          Whether the loopback node (the sender) should receive this message
+         * @return
+         */
+        public TransmissionBuilder broadcast(boolean loopback) {
+            this.message.setDest(null);
+            if (!loopback)
+                this.message.setTransientFlag(Message.TransientFlag.DONT_LOOPBACK);
+            return this;
+        }
+
+        /**
+         * Sets whether or not to relay the message to other connected JGroup clusters.
+         *
+         * @param relay
+         *          Relay to other clusters if {@code true} otherwise not.
+         * @return
+         */
+        public TransmissionBuilder relay(boolean relay) {
+            if (relay)
+                this.message.clearFlag(Message.Flag.NO_RELAY);
+            else
+                this.message.setFlag(Message.Flag.NO_RELAY);
+            return this;
+        }
+
+        /**
+         * Converts the builder to a {@link CompletableTransmission.CompletableTransmissionBuilder}.
+         * <br><i>Note: This is useful, if you want to do something with responses to this message
+         * by other nodes</i>
+         *
+         * @return
+         */
+        public CompletableTransmission.CompletableTransmissionBuilder toCollectable() {
+            return new CompletableTransmission.CompletableTransmissionBuilder(this.message);
+        }
+
+        /**
+         * Builds a Transmission object based on the previous configuration.
+         *
+         * @return
+         */
+        public Transmission build() {
+            return new Transmission(this.message);
+        }
+
     }
 
 }
