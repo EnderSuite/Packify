@@ -85,6 +85,15 @@ public class NetworkManager extends APacketDelegator {
     // ======================   HELPERS
 
     /**
+     * Returns the current number of nodes in the cluster.
+     *
+     * @return
+     */
+    public int getNodeCount() {
+        return getJChannel().getView().getMembers().size();
+    }
+
+    /**
      * Sends a message over the active JChannel.
      *
      * @param message
