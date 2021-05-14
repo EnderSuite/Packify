@@ -125,7 +125,7 @@ public class CompletableTransmission extends Transmission {
 
     /**
      * Cancels the CompletableTransmission.
-     * <br><i>Note: This will also call the error consumer with a {@link java.util.concurrent.CancellationException}!</i>
+     * <br><br><i>Note: This will also call the error consumer with a {@link java.util.concurrent.CancellationException}!</i>
      */
     public void cancel() {
         getDefaultNetworkManager().getCollectablePacketHandler().getPendingTransmissions().remove(this.collectionId);
@@ -171,7 +171,7 @@ public class CompletableTransmission extends Transmission {
         // Builder state
         private final Message message;
         private final UUID collectionId;
-        private int minReplies;
+        private final int minReplies;
         private Duration timeout;
         private final CompletableFuture<List<ACollectablePacket>> callback;
         private Consumer<CompletableTimeoutException> timeoutConsumer;
@@ -180,12 +180,12 @@ public class CompletableTransmission extends Transmission {
 
         // ======================   CONSTRUCTOR
 
-        protected CompletableTransmissionBuilder(Message message) {
+        protected CompletableTransmissionBuilder(Message message, int minReplies) {
             this.message = message;
 
             ACollectablePacket collectablePacket = message.getObject();
             this.collectionId = collectablePacket.getCollectionId();
-            this.minReplies = -1;
+            this.minReplies = minReplies;
             this.timeout = null;
             this.callback = new CompletableFuture<>();
         }
@@ -203,43 +203,6 @@ public class CompletableTransmission extends Transmission {
         public CompletableTransmissionBuilder timeout(Duration duration) {
             this.timeout = duration;
             return this;
-        }
-
-        /**
-         * Specifies that the done consumer (as specified by {@code onDone()}) should be called after receiving
-         * at least one response packet from all nodes in the cluster.
-         * <br><i>Note: If a node disconnects whilst a CompletableTransmission is pending,
-         * it will automatically detect it and call the done consumer if the amount of already received
-         * response packets exceeds the new cluster size.</i>
-         *
-         * @return
-         */
-        public CompletableTransmissionBuilder collectAll() {
-            return collectMultiple(getDefaultNetworkManager().getJChannel().getView().getMembers().size());
-        }
-
-        /**
-         * Specifies that the done consumer (as specified by {@code onDone()}) should be called after receiving
-         * at least {@code minReplies} amount of response packet.
-         *
-         * @param minReplies
-         *          The minimum amount of response packets
-         * @return
-         */
-        public CompletableTransmissionBuilder collectMultiple(int minReplies) {
-            // TODO: Print warn if minReplies > nodes count
-            this.minReplies = minReplies;
-            return this;
-        }
-
-        /**
-         * Specifies that the done consumer (as specified by {@code onDone()}) should be called after receiving
-         * at least one response packet.
-         *
-         * @return
-         */
-        public CompletableTransmissionBuilder collectOne() {
-            return collectMultiple(1);
         }
 
         /**

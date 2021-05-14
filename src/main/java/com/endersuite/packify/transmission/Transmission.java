@@ -12,7 +12,8 @@ import org.jgroups.Message;
  * A Transmission stores a {@link Message} and can be send (transmitted) to other nodes in the cluster.
  * A Transmission can only be created using a {@link TransmissionBuilder}.
  *
- * <br><i>Note: If you want to receive & collect responses from your transmission, use the {@link TransmissionBuilder#toCollectable()} method!</i>
+ * <br><br><i>Note: If you want to receive & collect responses from your transmission,
+ * use one of the {@code collectXXX()} methods!</i>
  *
  * @author Maximilian Vincent Heidenreich
  * @since 12.05.21
@@ -48,7 +49,7 @@ public class Transmission {
 
     /**
      * Sends the message to other nodes in the cluster.
-     * <br><i>Note: To specify a receiver or advanced broadcast options,
+     * <br><br><i>Note: To specify a receiver or advanced broadcast options,
      * use {@link TransmissionBuilder#to(Address)} or {@link TransmissionBuilder#broadcast(boolean)}!</i>
      *
      * @throws Exception
@@ -186,14 +187,41 @@ public class Transmission {
         }
 
         /**
-         * Converts the builder to a {@link CompletableTransmission.CompletableTransmissionBuilder}.
-         * <br><i>Note: This is useful, if you want to do something with responses to this message
-         * by other nodes</i>
+         * Specifies that the done consumer (as specified by {@code onDone()}) should be called after receiving
+         * at least one response packet from all nodes in the cluster.
+         * <br><br><i>Note: If a node disconnects whilst a CompletableTransmission is pending,
+         * it will automatically detect it and call the done consumer if the amount of already received
+         * response packets exceeds the new cluster size.</i>
+         * <br><br><i>Note: This also transforms the builder into a {@link CompletableTransmission.CompletableTransmissionBuilder}</i>
          *
          * @return
          */
-        public CompletableTransmission.CompletableTransmissionBuilder toCollectable() {
-            return new CompletableTransmission.CompletableTransmissionBuilder(this.message);
+        public CompletableTransmission.CompletableTransmissionBuilder collectAll() {
+            return collectExact(getDefaultNetworkManager().getJChannel().getView().getMembers().size());
+        }
+
+        /**
+         * Specifies that the done consumer (as specified by {@code onDone()}) should be called after receiving
+         * at least {@code minReplies} amount of response packet.
+         * <br><br><i>Note: This also transforms the builder into a {@link CompletableTransmission.CompletableTransmissionBuilder}</i>
+         *
+         * @param minReplies
+         *          The minimum amount of response packets
+         * @return
+         */
+        public CompletableTransmission.CompletableTransmissionBuilder collectExact(int minReplies) {
+            return new CompletableTransmission.CompletableTransmissionBuilder(this.message, minReplies);
+        }
+
+        /**
+         * Specifies that the done consumer (as specified by {@code onDone()}) should be called after receiving
+         * at least one response packet.
+         * <br><br><i>Note: This also transforms the builder into a {@link CompletableTransmission.CompletableTransmissionBuilder}</i>
+         *
+         * @return
+         */
+        public CompletableTransmission.CompletableTransmissionBuilder collectOne() {
+            return collectExact(1);
         }
 
         /**
