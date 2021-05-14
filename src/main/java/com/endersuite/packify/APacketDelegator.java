@@ -30,13 +30,6 @@ public abstract class APacketDelegator {
      */
     private final Map<Class<? extends APacket>, List<Consumer<? extends APacket>>> handlers;
 
-    /**
-     * Store all registered callbacks for single packet collection.
-     */
-    private final Map<UUID, CompletableFuture<APacket>> callbacks;   // <packetId, <callback, timeout>>
-
-
-
 
     /**
      * A reference to an event loop that gets used for packet handling.
@@ -60,7 +53,6 @@ public abstract class APacketDelegator {
     public APacketDelegator(EventLoop eventLoop) {
         this.packetQueue = new LinkedBlockingDeque<>();
         this.handlers = new ConcurrentHashMap<>();
-        this.callbacks = new ConcurrentHashMap<>();
         this.eventLoop = eventLoop;
     }
 
@@ -104,63 +96,6 @@ public abstract class APacketDelegator {
     }
 
 
-    // ======================   CALLBACK MANAGEMENT
-
-    /**
-     * Adds a callback.
-     *
-     * @param packet
-     *          The packet associated with the callback
-     * @return
-     *          {@code true} if added | {@code false} if not added
-     */
-    /*public boolean addCallback(AbstractPacket packet, CompletableFuture<AbstractPacket> callback) {
-
-        // RET: Callback already exists! This indicates a possible issue with packet id's and reusing ids to fast
-        if (getCallbacks().containsKey(packet.getId()))
-            return false;
-
-        getCallbacks().put(packet.getId(), Pair.from(callback, packet.getTimout()));
-        return true;
-
-    }*/
-
-    /**
-     * Removed a callback.
-     *
-     * @param packet
-     *          The packet associated with the callback
-     * @return
-     *          {@code true} if removed | {@code false} if not removed
-     */
-    /*public boolean removeCallback(AbstractPacket packet) {
-
-        // RET: No registered callback!
-        if (!getCallbacks().containsKey(packet.getId()))
-            return false;
-
-        getCallbacks().remove(packet.getId());
-        return true;
-
-    }*/
-
-    /**
-     * Removes all timed out callbacks.
-     * Note: A timed out callback will automatically get removed if a timed out packet was received.
-     *       But this prevents memory leaks if a packet never gets delivered!
-     */
-    /*private void cleanupTimeoutCallbacks() {
-        List<UUID> timedOutPackets = getCallbacks().keySet().stream()
-                .filter(uuid -> {
-                    long timeout =getCallbacks().get(uuid).getB();
-                    return (timeout != 0 && System.currentTimeMillis() > timeout);
-                }).collect(Collectors.toList());
-
-        log.debug("[JNet] Found " + timedOutPackets.size() + " timed out packets to remove!");
-        timedOutPackets.forEach(p -> getCallbacks().remove(p));
-    }*/
-
-
     // ======================   EVENT HANDLERS
 
     /**
@@ -172,12 +107,6 @@ public abstract class APacketDelegator {
     //@Synchronized
     public void handlePacketReceivedEvent(PacketReceivedEvent event) {
         APacket packet = event.getPacket();
-
-        // RET: Timeout!
-        /*if (packet.isTimeout()) {
-            exceptCallback(packet, new PacketTimeoutException(packet));
-            return;
-        }*/
 
         // RET: No handlers for abstractEvent!
         if (!getHandlers().containsKey(event.getPacket().getClass()))
@@ -194,43 +123,12 @@ public abstract class APacketDelegator {
 
         }
 
-        //if (packet instanceof ExceptionPacket) exceptCallback(packet, ((ExceptionPacket) packet).getException());
-        //else completeCallback(packet);
-
     }
 
 
     // ======================   HELPERS
 
-    /**
-     * Completes a registered callback with the specified packet as data.
-     *
-     * @param packet
-     *          The data to pass back to the callbacks
-     */
-    /*public void completeCallback(AbstractPacket packet) {
 
-        // RET: No registered callbacks!
-        if (!getCallbacks().containsKey(packet.getId())) return;
-
-        getCallbacks().get(packet.getId()).getA().complete(packet);
-        removeCallback(packet);
-    }*/
-
-    /**
-     * Excepts a registered callback.
-     *
-     * @param throwable
-     *          The reason why except was called
-     */
-    /*public void exceptCallback(AbstractPacket packet, Throwable throwable) {
-
-        // RET: No registered callbacks!
-        if (!getCallbacks().containsKey(packet.getId())) return;
-
-        getCallbacks().get(packet.getId()).getA().completeExceptionally(throwable);
-        removeCallback(packet);
-    }*/
 
 
 }
