@@ -186,7 +186,7 @@ public class CompletableTransmission extends Transmission {
             ACollectablePacket collectablePacket = message.getObject();
             this.collectionId = collectablePacket.getCollectionId();
             this.minReplies = minReplies;
-            this.timeout = null;
+            this.timeout = Duration.ofMinutes(15);
             this.callback = new CompletableFuture<>();
         }
 
