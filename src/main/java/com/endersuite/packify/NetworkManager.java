@@ -3,7 +3,9 @@ package com.endersuite.packify;
 import com.endersuite.libcore.strfmt.Level;
 import com.endersuite.libcore.strfmt.StrFmt;
 import com.endersuite.packify.events.PacketReceivedEvent;
-import com.endersuite.packify.handlers.CollectablePacketHandler;
+import com.endersuite.packify.transmission.CollectableManager;
+import com.endersuite.packify.packets.ACollectablePacket;
+import com.endersuite.packify.packets.APacket;
 import com.endersuite.packify.transmission.Transmission;
 import de.maximilianheidenreich.jeventloop.EventLoop;
 import lombok.Getter;
@@ -31,7 +33,7 @@ public class NetworkManager extends APacketDelegator {
     private final JChannel jChannel;
 
     @Getter
-    private final CollectablePacketHandler collectablePacketHandler;
+    private final CollectableManager collectableManager;
 
     @Getter
     private final ScheduledExecutorService scheduler;
@@ -49,7 +51,7 @@ public class NetworkManager extends APacketDelegator {
         this.jChannel = new JChannel();
         this.scheduler = Executors.newSingleThreadScheduledExecutor();
         this.jChannel.setReceiver(new DefaultReceiver(this));
-        this.collectablePacketHandler = new CollectablePacketHandler(this);
+        this.collectableManager = new CollectableManager(this);
         //this.jChannel.setDiscardOwnMessages(true);
 
         if ("default".equalsIgnoreCase(nodeName))
