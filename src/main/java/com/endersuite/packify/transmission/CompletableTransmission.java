@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -139,6 +140,29 @@ public class CompletableTransmission extends Transmission {
         this.callback.cancel(true);
     }
 
+    /**
+     * Returns the list of collected response packets when completed.
+     * <br><br><i>Note: Blocking operation! Handle with care!</i>
+     *
+     *
+     * @return The received response packets
+     * @throws CompletableTimeoutException
+     *          If the required amount response packets was not achieved before timeout
+     * @throws CompletionException
+     *          The raw exception from the {@link CompletableFuture#join()}
+     */
+    public List<ACollectablePacket> join() throws CompletableTimeoutException, CompletionException {
+        try {
+            return this.callback.join();
+        }
+        catch (CompletionException e) {
+            if (e.getCause() instanceof CompletableTimeoutException)
+                throw (CompletableTimeoutException) e.getCause();
+            else
+                throw e;
+        }
+    }
+
     @Override
     public void transmit() throws Exception {
 
@@ -163,7 +187,13 @@ public class CompletableTransmission extends Transmission {
      */
     @Synchronized
     public boolean isCompletable() {
-        return true;
+
+        // Normalize replies in case cluster changed from transmission build to now
+        int minReplies = this.minReplies;
+        if (minReplies > getDefaultNetworkManager().getNodeCount())
+            minReplies = getDefaultNetworkManager().getNodeCount();
+
+        return this.receivedResponsePackets.size() >= minReplies;
     }
 
     @Synchronized
