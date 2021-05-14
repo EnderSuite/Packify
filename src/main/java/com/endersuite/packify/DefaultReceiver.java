@@ -46,7 +46,7 @@ public class DefaultReceiver implements Receiver {
                 .setLevel(Level.DEBUG)
                 .toLog();
 
-        getNetworkManager().getCollectablePacketHandler().completeCompletableTransmissions();
+        getNetworkManager().getCollectableManager().completeCompletableTransmissions();
     }
 
     /**
