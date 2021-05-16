@@ -51,6 +51,19 @@
 
     </dependencies>
 
+    <distributionManagement>
+        <snapshotRepository>
+            <id>endersuite</id>
+            <name>endersuite-dev-snapshots</name>
+            <url>https://artifactory.endersuite.com/artifactory/endersuite-snapshot</url>
+        </snapshotRepository>
+        <repository>
+            <id>endersuite</id>
+            <name>endersuite-dev-releases</name>
+            <url>https://artifactory.endersuite.com/artifactory/endersuite-stable</url>
+        </repository>
+    </distributionManagement>
+
     <build>
         <plugins>
             <plugin>
