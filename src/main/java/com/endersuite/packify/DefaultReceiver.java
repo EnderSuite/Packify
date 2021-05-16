@@ -42,7 +42,7 @@ public class DefaultReceiver implements Receiver {
      */
     @Override
     public void viewAccepted(View new_view) {
-        new StrFmt("{prefix} Cluster members updated: §e" + new_view)
+        new StrFmt("{prefix} Cluster members updated: §e%s", new_view)
                 .setLevel(Level.INFO)
                 .toLog();
 
@@ -83,7 +83,7 @@ public class DefaultReceiver implements Receiver {
             packet.setSender(msg.getSrc());
             packet.setRecipient(msg.getDest());
 
-            new StrFmt("{prefix} Received packet: " + packet + " in " + (System.currentTimeMillis() - packet.getCreatedAt()) + "ms")
+            new StrFmt("{prefix} Received packet: %s in %dms", packet, (System.currentTimeMillis() - packet.getCreatedAt()))
                     .setLevel(Level.DEBUG)
                     .toLog();
 

@@ -101,7 +101,7 @@ public class NetworkManager extends APacketDelegator {
      * @throws Exception
      */
     public void sendRaw(Message message) throws Exception {
-        new StrFmt("{prefix} Sending: " + message.getObject()).setLevel(Level.TRACE).toLog();
+        new StrFmt("{prefix} Sending: ", message.getObject().toString()).setLevel(Level.TRACE).toLog();
         getJChannel().send(message);
     }
 
