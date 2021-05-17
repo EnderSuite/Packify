@@ -101,6 +101,10 @@ public class NetworkManager extends APacketDelegator {
      * @throws Exception
      */
     public void sendRaw(Message message) throws Exception {
+
+        // RET: Not connected
+        if (this.jChannel.isConnected()) return;
+
         new StrFmt("{prefix} Sending: ", message.getObject().toString()).setLevel(Level.TRACE).toLog();
         getJChannel().send(message);
     }
